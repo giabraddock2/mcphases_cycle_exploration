@@ -1,7 +1,11 @@
 # mcphases_cycle_exploration
 ## Predicting Period Start Dates with Wearable Data
 
-Use mcPHASES dataset to predict cycle timing in 42 women. Use dataset to explore the strength of models with limited data and increasingly limited features.
+Use mcPHASES dataset to predict cycle timing in 42 women. 
+
+*cycle timing* is defined as the number of days until the participant's next reported period begins. The prediction will be made once at the end of the day, using data available on that day. The goal of the project is to refine precision and accuracy on wearable-accessible data from the input data, including, hear rate, HRV, sleep, activity, skin temperature, and past calendar history of cycles. We can use the additional symptomatic and hormonal data from the dataset to compare the wearable specific model.
+
+What counts as a period? first day of bleeding, excluding spotting.
 
 ## Data
 
