@@ -1,0 +1,97 @@
+{
+  "labelling": {
+    "gap_days": 3,
+    "min_cycle_len": 15,
+    "max_cycle_len": 60,
+    "cycles": 119,
+    "participants": 39,
+    "cycles_by_interval": {
+      "2022": 76,
+      "2024": 43
+    }
+  },
+  "split": {
+    "train_participants": 27,
+    "test_participants": 12,
+    "seed": 0
+  },
+  "population_cycle_length_days": 30.0,
+  "personal_fallback_rate_pct": 51.2,
+  "repeated_splits": [
+    {
+      "model": "calendar-day",
+      "n_splits": 20,
+      "mean_MAE": 3.659,
+      "sd": 0.737,
+      "best": 2.388,
+      "worst": 5.699
+    },
+    {
+      "model": "population",
+      "n_splits": 20,
+      "mean_MAE": 3.691,
+      "sd": 0.788,
+      "best": 2.409,
+      "worst": 5.787
+    },
+    {
+      "model": "personalised",
+      "n_splits": 20,
+      "mean_MAE": 3.927,
+      "sd": 0.954,
+      "best": 2.47,
+      "worst": 6.399
+    }
+  ],
+  "single_split": [
+    {
+      "model": "population",
+      "n": 1199,
+      "MAE": 4.325,
+      "MAE_95CI": "[2.619, 6.666]",
+      "median_AE": 3.0,
+      "bias": -1.029,
+      "within_1d": 38.4,
+      "within_2d": 46.5,
+      "within_3d": 66.1
+    },
+    {
+      "model": "personalised",
+      "n": 1199,
+      "MAE": 4.952,
+      "MAE_95CI": "[3.04, 7.569]",
+      "median_AE": 3.0,
+      "bias": -1.309,
+      "within_1d": 30.8,
+      "within_2d": 45.2,
+      "within_3d": 56.5
+    },
+    {
+      "model": "calendar-day",
+      "n": 1199,
+      "MAE": 4.266,
+      "MAE_95CI": "[2.657, 6.444]",
+      "median_AE": 2.174,
+      "bias": -0.8,
+      "within_1d": 23.9,
+      "within_2d": 42.6,
+      "within_3d": 58.3
+    }
+  ],
+  "regimes": [
+    {
+      "regime": "new participant, cycle 0",
+      "n_participants": 12,
+      "n_days": 614,
+      "personal_MAE": 5.956,
+      "population_MAE": 5.956
+    },
+    {
+      "regime": "returning, cycle 1+",
+      "n_participants": 33,
+      "n_days": 1815,
+      "personal_MAE": 3.473,
+      "population_MAE": 3.015
+    }
+  ]
+}
