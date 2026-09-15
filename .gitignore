@@ -1,0 +1,29 @@
+# Keep mcPHASES dataset local, access via PhysioNet
+/data/**
+!/data/raw/
+!/data/processed/
+!/data/**/.gitkeep
+
+# Safeguard against any leakage
+*.csv
+*.zip
+*.parquet
+*.feather
+*.pkl
+*.h5
+*.sqlite
+
+# Make sure notebook checkpoints don't leak cleared outputs
+.ipynb_checkpoints/
+*-checkpoint.ipynb
+
+# Not committed yet
+CLAUDE.md
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.pytest_cache/

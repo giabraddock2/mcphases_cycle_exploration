@@ -74,3 +74,40 @@ The final test will always use real data from people the model has not seen.
 * Percent of predictions within 1, 2, and 3 days
 * Results for each person
 * Results at different points in the cycle
+
+---
+
+## Repository layout
+
+```
+data/          local only, git-ignored
+  raw/         unzipped mcPHASES CSVs
+  processed/
+notebooks/     01_data_exploration, 02_baselines
+src/           data.py, baselines.py, evaluation.py
+outputs/       figures/ and results/
+tests/
+```
+
+## Setup
+
+```bash
+pip install -r requirements.txt
+unzip mcphases-*.zip -j -d data/raw/
+python -m pytest tests/ -q
+```
+
+## Data handling
+
+The mcPHASES data is PhysioNet credentialed access.
+
+- Notebooks show aggregates and plots only, never participant rows.
+- Notebook outputs are cleared before committing.
+
+## Progress
+
+- Step 1, rudimentary estimates: the population and personalised baselines in notebook 02.
+- Step 2, three calendar-only models: population (one cycle length for everyone), personalised
+  (each participant's own earlier cycles) and calendar-day (average days remaining at each cycle
+  day, with no assumed length). Results in `outputs/results/baseline_results.md`.
+- Step 3, wearable features: not started.
