@@ -13,4 +13,4 @@
 | regime                   |   n_participants |   n_days |   personal_MAE |   population_MAE |
 |:-------------------------|-----------------:|---------:|---------------:|-----------------:|
 | new participant, cycle 0 |               12 |      614 |          5.956 |            5.956 |
-| returning, cycle 1+      |               33 |     1815 |          3.473 |            3.015 |
+| returning, cycle 1+      |               11 |      585 |          3.898 |            2.614 |
