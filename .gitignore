@@ -20,6 +20,9 @@
 # Not committed yet
 CLAUDE.md
 
+# Private, unpublished state-space exploration
+notebooks/05_state_space_modelling.ipynb
+
 # Python
 __pycache__/
 *.py[cod]

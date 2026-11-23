@@ -106,3 +106,22 @@ def test_feature_columns_are_the_eight_names():
     cols = wear.feature_columns()
     assert len(cols) == 8
     assert cols[:2] == ["resting_hr_dev", "resting_hr_z"]
+
+
+def test_hrv_night_start_labels_and_noon_boundary(monkeypatch):
+    raw = pd.DataFrame({
+        "id": [1, 1, 1, 1, 1, 2, 1],
+        "study_interval": [2022] * 6 + [2024],
+        "day_in_study": [1, 2, 2, 2, 1, 2, 2],
+        "timestamp": ["23:00:00", "00:00:00", "11:59:59", "12:00:00",
+                      "08:00:00", "08:00:00", "08:00:00"],
+        "rmssd": [30., 60., 90., 120., 15., 180., 210.],
+    })
+    monkeypatch.setattr(wear.pd, "read_csv", lambda *args, **kwargs: raw.copy())
+    monkeypatch.setattr(wear, "data_path", lambda *args: "synthetic.csv")
+    got = wear._hrv(None).set_index(wear.KEY).hrv_rmssd
+    assert got.loc[(1, 2022, 1)] == 60.  # Same night across midnight.
+    assert got.loc[(1, 2022, 2)] == 120.  # Noon stays on source day.
+    assert got.loc[(1, 2022, 0)] == 15.  # Preserve boundary; do not clamp.
+    assert got.loc[(2, 2022, 1)] == 180.  # No participant mixing.
+    assert got.loc[(1, 2024, 1)] == 210.  # No interval mixing.

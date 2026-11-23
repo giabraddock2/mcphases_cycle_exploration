@@ -11,10 +11,10 @@ PARTICIPANT = ["id", "study_interval"]
 
 SIGNALS = ("resting_hr", "skin_temp", "hrv_rmssd", "breathing_rate")
 
-# TODO(TIMING_ALIGNMENT): This is a heuristic, not a documented dataset rule.
-# Verify HRV epoch dates against sleep sessions before using wake-day model features.
-# Currently, readings from this hour onward are assigned to the following day.
-EVENING_HOUR = 18
+# User-selected night-start convention, not verified sleep-session boundaries.
+# Before noon belongs to the previous day; noon onward stays on the source day.
+# A label is not availability: night N can include readings from morning N+1.
+HRV_NIGHT_START_CUTOFF_HOUR = 12
 
 # Provisional RMSSD upper threshold; validate before modelling.
 RMSSD_MAX = 300
@@ -43,8 +43,8 @@ def _hrv(data_dir):
     df = pd.read_csv(data_path("heart_rate_variability_details.csv", data_dir),
                      usecols=KEY + ["timestamp", "rmssd"])
     df = df[(df.rmssd > 0) & (df.rmssd < RMSSD_MAX)]
-    evening = pd.to_datetime(df.timestamp).dt.hour >= EVENING_HOUR
-    df = df.assign(day_in_study=df.day_in_study + evening.astype(int))
+    before_noon = pd.to_datetime(df.timestamp, format="mixed").dt.hour < HRV_NIGHT_START_CUTOFF_HOUR
+    df = df.assign(day_in_study=df.day_in_study - before_noon.astype(int))
     # Aggregate the assigned night's readings into one daily mean.
     return df.groupby(KEY, as_index=False).rmssd.mean().rename(columns={"rmssd": "hrv_rmssd"})
 
