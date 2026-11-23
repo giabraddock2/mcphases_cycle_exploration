@@ -38,7 +38,7 @@ def test_personal_ignores_the_current_and_later_cycles():
     """Cycle 0 is 20 days and cycle 1 is 40. Predicting cycle 1 may only see 20."""
     c = make_cycles({1: [20, 40]})
     m = base.PersonalBaseline(fallback=base.PopulationBaseline().fit(c)).fit(c)
-    est, used_fallback = m._estimate(1, 1)
+    est, used_fallback = m._estimate(1, 2022, 1)
     assert est == 20.0
     assert not used_fallback
 
@@ -46,7 +46,7 @@ def test_personal_ignores_the_current_and_later_cycles():
 def test_first_cycle_uses_the_fallback():
     c = make_cycles({1: [20, 40], 2: [30, 30]})
     pop = base.PopulationBaseline().fit(c)
-    est, used_fallback = base.PersonalBaseline(fallback=pop).fit(c)._estimate(1, 0)
+    est, used_fallback = base.PersonalBaseline(fallback=pop).fit(c)._estimate(1, 2022, 0)
     assert used_fallback
     assert est == pop.cycle_length_
 
@@ -54,8 +54,35 @@ def test_first_cycle_uses_the_fallback():
 def test_unknown_participant_uses_the_fallback():
     c = make_cycles({1: [28, 28]})
     pop = base.PopulationBaseline().fit(c)
-    est, used_fallback = base.PersonalBaseline(fallback=pop).fit(c)._estimate(999, 3)
+    est, used_fallback = base.PersonalBaseline(fallback=pop).fit(c)._estimate(999, 2022, 3)
     assert used_fallback and est == pop.cycle_length_
+
+
+def test_personal_history_is_isolated_by_interval():
+    early = make_cycles({1: [20, 28]})
+    later = make_cycles({1: [40, 45]}).assign(study_interval=2024)
+    cycles = pd.concat([early, later], ignore_index=True)
+    # Fit the fallback on independent training participants.
+    fallback = base.PopulationBaseline().fit(make_cycles({2: [30]}))
+    model = base.PersonalBaseline(fallback=fallback).fit(cycles)
+    frame = data.make_daily_prediction_frame(cycles)
+    first_days = frame.loc[frame.cycle_day.eq(1)]
+    predicted, used_fallback = model.predict(first_days, return_fallback_mask=True)
+    # A 2024 cycle must not leak into 2022 history; 2022 history also must not
+    # become a prior cycle after numbering restarts in 2024.
+    np.testing.assert_allclose(predicted, [30, 20, 30, 40])
+    np.testing.assert_array_equal(used_fallback, [True, False, True, False])
+    # Public expanding-history wrapper must obey the same isolation.
+    wrapped, mask = base.predict_expanding_personal(first_days, cycles, fallback)
+    np.testing.assert_allclose(wrapped, predicted)
+    np.testing.assert_array_equal(mask, used_fallback)
+
+
+def test_personal_unknown_interval_uses_fallback():
+    cycles = make_cycles({1: [20, 40]})
+    fallback = base.PopulationBaseline().fit(make_cycles({2: [28]}))
+    model = base.PersonalBaseline(fallback=fallback).fit(cycles)
+    assert model._estimate(1, 2024, 1) == (28.0, True)
 
 
 def test_calendar_day_learns_the_average_at_each_day():

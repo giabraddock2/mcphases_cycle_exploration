@@ -50,11 +50,20 @@ def check_duplicates(df):
 
 
 def missingness(df):
-    """Per-column dtype and missing percentage."""
+    """Missingness overall and across participants' observed rows.
+
+    Participant mean/median give each participant equal weight. Filter to one
+    study interval when fields were collected differently between intervals.
+    """
+    missing = df.isna()
+    per_participant = 100 * missing.groupby(df["id"]).mean()
     out = pd.DataFrame({
         "dtype": df.dtypes.astype(str),
-        "n_missing": df.isna().sum(),
-        "pct_missing": (100 * df.isna().mean()).round(2),
+        "n_missing": missing.sum(),
+        "pct_missing": (100 * missing.mean()).round(2),
+        "participant_mean_pct_missing": per_participant.mean().round(2),
+        "participant_median_pct_missing": per_participant.median().round(2),
+        "participants_all_missing": per_participant.eq(100).sum(),
     })
     return out.sort_values("pct_missing", ascending=False)
 

@@ -27,7 +27,7 @@ class PopulationBaseline:
 
 
 class PersonalBaseline:
-    """Each participant's own cycle length, from their earlier cycles only."""
+    """Earlier cycle lengths within the same participant and study interval."""
 
     def __init__(self, statistic="median", fallback=None):
         self.statistic = statistic
@@ -35,21 +35,23 @@ class PersonalBaseline:
         self.history_ = {}
 
     def fit(self, train_cycles):
-        """Store each participant's cycles as an array of [cycle_index, length].
+        """Store [cycle_index, length] arrays per participant and interval.
 
-        history_ ends up like {7: array([[0, 28], [1, 30], [2, 28]]), ...}
+        Cycle indices restart in each interval, so they cannot order history
+        across intervals. Reset history between intervals, matching the newer
+        history-feature models; do not implicitly carry prior-study history.
         """
         self.history_ = {
-            pid: g.sort_values("cycle_index")[["cycle_index", "cycle_length"]].to_numpy()
-            for pid, g in train_cycles.groupby("id")
+            key: g.sort_values("cycle_index")[["cycle_index", "cycle_length"]].to_numpy()
+            for key, g in train_cycles.groupby(["id", "study_interval"])
         }
         if self.fallback is not None and self.fallback.cycle_length_ is None:
             self.fallback.fit(train_cycles)
         return self
 
-    def _estimate(self, pid, cycle_index):
-        """Median length of this participant's earlier cycles, or the fallback."""
-        hist = self.history_.get(pid)
+    def _estimate(self, pid, study_interval, cycle_index):
+        """Earlier cycles in this participant-interval, or the fallback."""
+        hist = self.history_.get((pid, study_interval))
         if hist is not None:
             # column 0 is cycle_index, column 1 is length; keep rows before this cycle
             prior = hist[hist[:, 0] < cycle_index][:, 1]
@@ -63,8 +65,10 @@ class PersonalBaseline:
     def predict(self, frame, return_fallback_mask=False):
         est = np.empty(len(frame))
         used_fb = np.zeros(len(frame), dtype=bool)
-        for i, (pid, k) in enumerate(zip(frame.id.to_numpy(), frame.cycle_index.to_numpy())):
-            est[i], used_fb[i] = self._estimate(pid, int(k))
+        for i, (pid, interval, k) in enumerate(zip(
+            frame.id.to_numpy(), frame.study_interval.to_numpy(), frame.cycle_index.to_numpy()
+        )):
+            est[i], used_fb[i] = self._estimate(pid, interval, int(k))
         pred = np.clip(est - frame.cycle_day.to_numpy() + 1, MIN_PREDICTION, None)
         return (pred, used_fb) if return_fallback_mask else pred
 
@@ -99,8 +103,8 @@ def predict_expanding_personal(frame, cycles, fallback, statistic="median"):
     """Personalised predictions for participants already seen.
 
     cycles is the full cycles DataFrame. Each cycle is predicted from the median
-    of that participant's earlier cycles only, so their history grows as the
-    study goes on. Returns (predictions, mask of rows that used the fallback).
+    of that participant's earlier cycles in the same interval only. History
+    resets between intervals. Returns (predictions, fallback mask).
     """
     model = PersonalBaseline(statistic=statistic, fallback=fallback).fit(cycles)
     return model.predict(frame, return_fallback_mask=True)
